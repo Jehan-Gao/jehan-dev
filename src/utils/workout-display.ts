@@ -1,117 +1,111 @@
-/**
- * Workout display utilities
- */
-
 export const sportIcons: Record<string, string> = {
   Run: '🏃',
   Ride: '🚴',
   Walk: '🚶',
-  Hike: '🚶‍♂️',
-  AlpineSki: '⛷️',
-  BackcountrySki: 'سقوط',
-  Canoeing: '🛶',
-  Crossfit: '🏋️',
-  ECBike: ' adorable',
-  Elliptical: ' stdClass',
-  Golf: '⛳',
-  Handcycle: '🦵',
-  IceSkate: '⛸️',
-  InlineSkate: '🛼',
-  Kayaking: '🛶',
-  Kitesurf: '🌬️',
-  MountainBike: '🚵',
-  NordicSki: ' Nordic',
-  Play: '⚽',
-  Rowing: '🚣',
-  Snowboard: '🏂',
-  Snowshoe: ' snowshoe',
-  Soccer: '⚽',
-  StandUpPaddling: ' 🏄',
-  Surfing: ' 🌊',
   Swim: '🏊',
-  Velomobile: ' 🚲',
-  VirtualRide: ' 👨‍💻',
-  VirtualRun: ' 🏃',
-  WeightTraining: ' 💪',
-  Wheelchair: ' 🔄',
-  Workout: ' 🏋️',
+  Hike: '🥾',
+  Yoga: '🧘',
+  WeightTraining: '🏋️',
+  Badminton: '🏸',
+}
+
+export function deviceEmoji(name: string): string {
+  const n = name.toLowerCase()
+  if (n.includes('apple watch'))
+    return '⌚'
+  if (n.includes('iphone'))
+    return '📱'
+  if (n.includes('ipad'))
+    return '📱'
+  if (n.includes('garmin'))
+    return '⌚'
+  if (n.includes('fitbit'))
+    return '⌚'
+  if (n.includes('wahoo') || n.includes('bike computer'))
+    return '🖥️'
+  if (n.includes('polar'))
+    return '⌚'
+  if (n.includes('suunto'))
+    return '⌚'
+  if (n.includes('coros'))
+    return '⌚'
+  if (n.includes('samsung') || n.includes('galaxy watch'))
+    return '⌚'
+  if (n.includes('android') || n.includes('pixel'))
+    return '📱'
+  if (n.includes('zwift') || n.includes('peloton') || n.includes('trainer'))
+    return '🚲'
+  return '📟'
+}
+
+export function formatMovingDuration(seconds: number, mode: 'list' | 'detail'): string {
+  const roundedSeconds = Math.round(seconds)
+  const h = Math.floor(roundedSeconds / 3600)
+  const m = Math.floor((roundedSeconds % 3600) / 60)
+  const s = roundedSeconds % 60
+  if (mode === 'detail') {
+    if (h > 0)
+      return `${h}h ${m}m ${s}s`
+    return `${m}m ${s}s`
+  }
+  if (h > 0)
+    return `${h}h ${m}m`
+  return `${m}m`
+}
+
+export function formatDistanceMeters(meters: number): string {
+  if (meters < 1000)
+    return `${Math.round(meters)}m`
+  return `${(meters / 1000).toFixed(2)} km`
 }
 
 export function formatDistanceMetersCompact(meters: number): string {
-  if (meters >= 1000)
-    return `${(meters / 1000).toFixed(2)} km`
-  return `${Math.round(meters)} m`
+  if (meters < 1000)
+    return `${Math.round(meters)}m`
+  return `${(meters / 1000).toFixed(2)}km`
 }
 
-export function formatMovingDuration(seconds: number, format: 'list' | 'detail' = 'list'): string {
-  const hours = Math.floor(seconds / 3600)
-  const minutes = Math.floor((seconds % 3600) / 60)
-  const secs = seconds % 60
-  
-  if (format === 'list') {
-    if (hours > 0)
-      return `${hours}:${minutes.toString().padStart(2, '0')}`
-    return `${minutes}m ${secs}s`
-  }
-  else {
-    const parts: string[] = []
-    if (hours > 0)
-      parts.push(`${hours}h`)
-    if (minutes > 0 || hours > 0)
-      parts.push(`${minutes}m`)
-    parts.push(`${secs}s`)
-    return parts.join(' ')
-  }
+export function formatPaceOrSpeed(sportType: string, avgSpeed: number): string {
+  if (avgSpeed === 0)
+    return '-'
+  if (sportType === 'Ride')
+    return `${(avgSpeed * 3.6).toFixed(1)} km/h`
+  const totalPaceSeconds = Math.round(1000 / avgSpeed)
+  const paceMin = Math.floor(totalPaceSeconds / 60)
+  const paceSec = totalPaceSeconds % 60
+  return `${paceMin}'${String(paceSec).padStart(2, '0')}"/km`
 }
 
-export function formatPaceOrSpeed(sportType: string, value: number): string {
-  if (sportType === 'Run' || sportType === 'Walk' || sportType === 'Hike') {
-    if (value <= 0) return ''
-    const paceMin = Math.floor(60 / value)
-    const paceSec = Math.round((60 / value - paceMin) * 60)
-    return `${paceMin}:${paceSec.toString().padStart(2, '0')}/km`
-  }
-  else {
-    if (value <= 0) return ''
-    return `${(value * 3.6).toFixed(1)} km/h`
-  }
+export function formatMaxSpeedKmh(maxSpeed: number): string {
+  return `${(maxSpeed * 3.6).toFixed(1)} km/h`
 }
 
-/**
- * Heat level for workout heatmap
- */
-export function dailyMovingTimeHeatLevel(seconds: number): number {
-  if (seconds === 0) return 0
-  if (seconds < 30 * 60) return 1
-  if (seconds < 60 * 60) return 2
+export function effectiveMovingSeconds(movingTime: number, elapsedTime: number): number {
+  const m = Math.max(0, Math.floor(movingTime))
+  if (m > 0)
+    return m
+  return Math.max(0, Math.floor(elapsedTime))
+}
+
+export function dailyMovingTimeHeatLevel(seconds: number): 0 | 1 | 2 | 3 {
+  const s = Math.max(0, Math.floor(seconds))
+  if (s <= 0)
+    return 0
+  const m = s / 60
+  if (m < 45)
+    return 1
+  if (m < 90)
+    return 2
   return 3
 }
 
-/**
- * Calculate effective moving seconds based on activity type
- */
-export function effectiveMovingSeconds(movingTime: number, elapsedTime: number): number {
-  return movingTime
-}
-
-/**
- * Format duration for heatmap tooltip
- */
-export function formatDurationHeatmap(seconds: number): string {
-  if (seconds === 0)
-    return '0s'
-  
-  const hours = Math.floor(seconds / 3600)
-  const minutes = Math.floor((seconds % 3600) / 60)
-  const secs = seconds % 60
-  
-  const parts: string[] = []
-  if (hours > 0)
-    parts.push(`${hours}h`)
-  if (minutes > 0 || hours > 0)
-    parts.push(`${minutes}m`)
-  if (secs > 0 || parts.length === 0)
-    parts.push(`${secs}s`)
-  
-  return parts.join(' ')
+export function formatDurationHeatmap(totalSeconds: number): string {
+  const s = Math.max(0, Math.floor(totalSeconds))
+  const h = Math.floor(s / 3600)
+  const m = Math.floor((s % 3600) / 60)
+  if (h > 0 && m > 0)
+    return `${h}h ${m}m`
+  if (h > 0)
+    return `${h}h`
+  return `${m}m`
 }
