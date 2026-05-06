@@ -1,7 +1,4 @@
 ---
-import CornerMarkers from '../CornerMarkers.astro'
-import ArrowRight from '../icons/ArrowRight.astro'
-
 interface Props {
   text: string
   href: string
@@ -15,5 +12,8 @@ const { text, href } = Astro.props
   class="inline-flex items-center gap-2 px-4 py-3 min-h-[2.75rem] text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900 transition-colors font-mono"
 >
   {text}
-  <ArrowRight class="h-3 w-3" />
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3">
+    <path d="M5 12h14"></path>
+    <path d="m12 5 7 7-7 7"></path>
+  </svg>
 </a>
