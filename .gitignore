@@ -1,17 +1,26 @@
-@fontsource/inter/files/inter-latin-400-normal.woff2
-
-# Environment variables
-.env
-
-# Build output
+# build output
 dist/
+# generated types
+.astro/
+
+# dependencies
 node_modules/
 
-# Data files (can be regenerated)
-data/strava/activities/*.json
-data/strava/activities/_index.json
-data/strava/activities/_meta.json
+# logs
+*.log
 
-# PDF exports
+# environment variables
+.env
+.env.production
+
+# macOS-specific files
+.DS_Store
+
+# Output
 pdfs/
-screenshots/
+
+# AI
+.claude
+
+# Misc
+screenshots

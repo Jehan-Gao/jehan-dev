@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=https://huacnlee.github.io/autocorrect/schema.json
+rules:
+  space-word: 1
+  space-punctuation: 1
+  space-bracket: 1
+  space-backticks: 1
+  space-dash: 1
+  fullwidth: 1
+  no-space-fullwidth: 1
+  no-space-fullwidth-quote: 1
+  halfwidth-word: 1
+  halfwidth-punctuation: 1
+  spellcheck: 0
+
+context:
+  codeblock: 1
+
+textRules:
+
+spellcheck:
+  words:
+
+fileTypes:
+  md: markdown
+  mdx: markdown
