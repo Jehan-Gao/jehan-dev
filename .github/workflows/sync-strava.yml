@@ -2,32 +2,58 @@ name: Sync Strava Activities
 
 on:
   schedule:
-    - cron: '0 * * * *'
+    - cron: '55 * * * *'
   workflow_dispatch:
 
 jobs:
   sync:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: '20'
-          cache: 'pnpm'
+          node-version-file: .nvmrc
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          cache: true
+
       - name: Install dependencies
         run: pnpm install
-      - name: Sync Strava activities
-        run: pnpm sync:strava:activities
-        env:
-          STRAVA_CLIENT_ID: ${{ vars.STRAVA_CLIENT_ID }}
-          STRAVA_CLIENT_SECRET: ${{ vars.STRAVA_CLIENT_SECRET }}
-          STRAVA_REFRESH_TOKEN: ${{ secrets.STRAVA_REFRESH_TOKEN }}
-      - name: Commit changes
+
+      - name: Create .env file
         run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add data/strava/activities/
-          git commit -m 'Sync Strava activities' || echo "No changes to commit"
-          git push
+          echo "STRAVA_CLIENT_ID=${{ secrets.STRAVA_CLIENT_ID }}" >> .env
+          echo "STRAVA_CLIENT_SECRET=${{ secrets.STRAVA_CLIENT_SECRET }}" >> .env
+          echo "STRAVA_REFRESH_TOKEN=${{ secrets.STRAVA_REFRESH_TOKEN }}" >> .env
+
+      - name: Run Strava sync
+        run: pnpm run sync:strava:activities
+
+      - name: Commit and push changes
+        id: commit
+        uses: stefanzweifel/git-auto-commit-action@v7
+        with:
+          commit_message: 🔄 Sync Strava activities
+          file_pattern: data/strava/activities/
+
+      - name: Trigger deploy workflow
+        if: steps.commit.outputs.changes_detected == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'deploy.yml',
+              ref: 'main'
+            })
