@@ -1,0 +1,180 @@
+---
+interface Props {
+  class?: string
+}
+
+const { class: className } = Astro.props
+---
+
+<div
+  id="image-preview-dialog"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Image preview"
+  class="fixed inset-0 z-[9998] hidden flex-col items-center justify-center p-4 sm:p-8"
+>
+  <div class="absolute inset-0 bg-black/75 backdrop-blur-sm" data-image-preview-close aria-hidden="true"></div>
+  <div class="relative z-10 flex max-h-[min(92vh,56rem)] w-full max-w-[min(96vw,72rem)] flex-col bg-white shadow-2xl ring-1 ring-gray-200">
+    <div class="flex items-center justify-between gap-3 border-b border-gray-200 px-4 py-3">
+      <p id="image-preview-caption" class="min-w-0 flex-1 truncate text-sm font-mono text-gray-600"></p>
+      <button type="button" id="image-preview-close-btn" class="shrink-0 text-gray-400 transition-colors hover:text-gray-900 focus:outline-none cursor-pointer" aria-label="Close image preview" data-image-preview-close>
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class aria-hidden="true">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <div class="flex min-h-0 flex-1 items-center justify-center overflow-auto bg-gray-100 p-3 sm:p-6">
+      <img id="image-preview-img" class="max-h-[min(85vh,52rem)] w-auto max-w-full object-contain" alt="" decoding="async">
+    </div>
+  </div>
+</div>
+<script>
+  const dialogId = "image-preview-dialog"
+  const imgId = "image-preview-img"
+  const captionId = "image-preview-caption"
+  const closeBtnId = "image-preview-close-btn"
+  const imageSelector = 'article.prose img, img[data-lightbox="true"]'
+  const closeSelectors = "[data-image-preview-close]"
+
+  let activeElement: HTMLElement | null = null
+
+  function getDialog() {
+    return document.getElementById(dialogId)
+  }
+
+  function openDialog(img: HTMLImageElement) {
+    const dialog = getDialog()
+    const previewImg = document.getElementById(imgId)
+    const caption = document.getElementById(captionId)
+    const closeBtn = document.getElementById(closeBtnId)
+
+    if (!dialog || !previewImg || !caption)
+      return
+
+    activeElement = document.activeElement as HTMLElement
+    const src = img.currentSrc || img.src
+    previewImg.src = src
+    previewImg.alt = img.alt || ''
+    const captionText = (img.alt || '').trim()
+    if (captionText) {
+      caption.textContent = captionText
+      caption.classList.remove('text-gray-400', 'italic')
+    }
+    else {
+      caption.textContent = 'No description'
+      caption.classList.add('text-gray-400', 'italic')
+    }
+
+    dialog.classList.remove('hidden')
+    dialog.classList.add('flex')
+    document.body.classList.add('overflow-hidden')
+    closeBtn?.focus()
+  }
+
+  function closeDialog() {
+    const dialog = getDialog()
+    const previewImg = document.getElementById(imgId)
+
+    if (!dialog || !previewImg)
+      return
+
+    dialog.classList.add('hidden')
+    dialog.classList.remove('flex')
+    document.body.classList.remove('overflow-hidden')
+    previewImg.removeAttribute('src')
+    previewImg.alt = ''
+    activeElement?.focus()
+    activeElement = null
+  }
+
+  function handleKeyDown(event: KeyboardEvent) {
+    const dialog = getDialog()
+    if (!dialog || dialog.classList.contains('hidden'))
+      return
+
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      closeDialog()
+      return
+    }
+
+    if (event.key === 'Tab') {
+      const dialogEl = dialog
+      const focusableElements = Array.from(dialogEl.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'))
+        .filter(a => !a.hasAttribute('disabled') && a.tabIndex !== -1 && a.offsetParent !== null)
+
+      if (focusableElements.length === 0)
+        return
+
+      const firstElement = focusableElements[0]
+      const lastElement = focusableElements.at(-1)
+
+      if (lastElement == null)
+        return
+
+      if (event.shiftKey) {
+        if (document.activeElement === firstElement) {
+          lastElement.focus()
+          event.preventDefault()
+        }
+      }
+      else {
+        if (document.activeElement === lastElement) {
+          firstElement.focus()
+          event.preventDefault()
+        }
+      }
+    }
+  }
+
+  function initImages() {
+    document.querySelectorAll(imageSelector).forEach(img => {
+      if (img.closest(`#${dialogId}`) || img.dataset.previewBound === 'true')
+        return
+
+      img.dataset.previewBound = 'true'
+      img.classList.add('cursor-zoom-in', 'transition-transform', 'duration-200', 'hover:brightness-[0.98]')
+
+      const handleClick = (event: Event) => {
+        event.preventDefault()
+        event.stopPropagation()
+        openDialog(img)
+      }
+
+      img.addEventListener('click', handleClick)
+      img.tabIndex = 0
+      img.setAttribute('role', 'button')
+
+      const altText = img.alt?.trim()
+      const ariaLabel = altText ? `Enlarge image: ${altText}` : 'Enlarge image'
+      img.setAttribute('aria-label', ariaLabel)
+
+      img.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ')
+          handleClick(event as unknown as Event)
+      })
+    })
+  }
+
+  document.addEventListener('click', (event) => {
+    const target = event.target as HTMLElement
+    if (!target)
+      return
+
+    const dialog = getDialog()
+    if (!dialog || dialog.classList.contains('hidden'))
+      return
+
+    if (target.closest(closeSelectors)) {
+      closeDialog()
+    }
+  })
+
+  window.addEventListener('keydown', handleKeyDown)
+  initImages()
+
+  document.addEventListener('astro:page-load', () => {
+    initImages()
+  })
+</script>
