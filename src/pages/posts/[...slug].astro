@@ -1,0 +1,142 @@
+---
+import { getCollection, render } from 'astro:content'
+import CornerMarkers from '../../components/CornerMarkers.astro'
+import LightBox from '../../components/LightBox.astro'
+import LayoutPost from '../../layouts/LayoutPost.astro'
+
+const RT_CODE_FENCE = /```[\s\S]*?```/g
+const RT_INLINE_CODE = /`[^`]+`/g
+const RT_MD_LINK = /\[([^\]]+)\]\([^)]+\)/g
+const RT_MD_SYNTAX = /[#*_~`]/g
+const RT_NEWLINES = /\n+/g
+const RT_WS = /\s+/
+
+export async function getStaticPaths() {
+  const blogEntries = await getCollection('posts')
+  return blogEntries.map(entry => ({
+    params: { slug: entry.id },
+    props: { entry },
+  }))
+}
+
+const { entry } = Astro.props
+const { Content } = await render(entry)
+
+// Calculate reading time
+function readingTime(content: string) {
+  if (!content)
+    return 1
+  const plainText = content
+    .replace(RT_CODE_FENCE, '')
+    .replace(RT_INLINE_CODE, '')
+    .replace(RT_MD_LINK, '$1')
+    .replace(RT_MD_SYNTAX, '')
+    .replace(RT_NEWLINES, ' ')
+    .trim()
+  const words = plainText.split(RT_WS).filter(word => word.length > 0).length
+  return Math.max(1, Math.ceil(words / 200))
+}
+
+let readTime = 1
+try {
+  const contentText = (entry as any).body || ''
+  readTime = readingTime(contentText)
+}
+catch {
+  readTime = 1
+}
+---
+
+<LayoutPost frontmatter={entry.data}>
+  <div class="min-h-screen bg-[#f5f5f5] text-gray-900">
+    <div class="max-w-4xl mx-auto px-4 py-8 md:py-12">
+      <nav class="flex items-center gap-1.5 text-xs sm:text-sm text-gray-500 mb-6 sm:mb-8 font-mono">
+        <a href="/" class="hover:text-gray-900 transition-colors">~</a>
+        <span class="text-gray-300">/</span>
+        <a href="/posts" class="hover:text-gray-900 transition-colors">posts</a>
+        <span class="text-gray-300">/</span>
+        <span class="text-gray-900 truncate max-w-[9.375rem] sm:max-w-[12.5rem]">{entry.data.title}</span>
+      </nav>
+
+      <div class="bg-white border border-gray-200 p-6 md:p-8 mb-8 relative">
+        <CornerMarkers />
+
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4 tracking-tight font-mono">
+          <span class="text-gray-400">#</span> {entry.data.title}
+        </h1>
+
+        {entry.data.description && (
+          <p class="text-gray-600 mb-6 text-lg border-l-2 border-gray-300 pl-4">
+            <span class="text-gray-400">{'>'}</span> {entry.data.description}
+          </p>
+        )}
+
+        <div class="flex flex-wrap items-center gap-4 text-sm text-gray-500 pt-4 border-t border-gray-200 font-mono">
+          <div class="flex items-center gap-2">
+            <span class="text-gray-400">date:</span>
+            <time datetime={entry.data.date.toISOString()} class="text-gray-900">
+              {entry.data.date.toISOString().split('T')[0]}
+            </time>
+          </div>
+          <span class="text-gray-300">|</span>
+          <div class="flex items-center gap-2">
+            <span class="text-gray-400">read:</span>
+            <span class="text-gray-900">{readTime}min</span>
+          </div>
+          {entry.data.draft && (
+            <>
+              <span class="text-gray-300">|</span>
+              <span class="px-2 py-0.5 text-xs font-medium bg-gray-200 text-gray-700">DRAFT</span>
+            </>
+          )}
+          {entry.data.wip && (
+            <>
+              <span class="text-gray-300">|</span>
+              <span class="px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700">WIP</span>
+            </>
+          )}
+        </div>
+
+        {entry.data.tags && entry.data.tags.length > 0 && (
+          <div class="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-gray-200">
+            <span class="text-gray-400 font-mono text-sm">tags:</span>
+            {entry.data.tags.map((tag: string) => (
+              <a
+                href={`/tags/${tag}`}
+                class="px-2 py-0.5 text-sm border border-gray-300 text-gray-600 hover:border-gray-900 hover:text-gray-900 transition-colors"
+              >
+                {tag}
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div class="bg-white border border-gray-200 p-5 sm:p-6 md:p-8 lg:p-12 relative">
+        <CornerMarkers />
+
+        {entry.data.wip && (
+          <div class="mb-8 p-4 bg-amber-50 border-l-4 border-amber-400 text-amber-800 text-sm font-mono flex items-start">
+            <span class="mr-2">🚧</span>
+            <span>
+              <strong>Note:</strong> This post is a work in progress. It might be incomplete or undergo significant changes.
+            </span>
+          </div>
+        )}
+        <LightBox />
+        <article class="prose prose-gray max-w-none prose-headings:font-bold prose-headings:text-gray-900 prose-headings:font-mono prose-h1:text-3xl prose-h1:md:text-4xl prose-h1:mb-6 prose-h2:text-xl prose-h2:md:text-2xl prose-h2:mt-8 prose-h2:mb-4 prose-h2:border-b prose-h2:border-gray-200 prose-h2:pb-2 prose-h3:text-lg prose-h3:md:text-xl prose-h3:mt-6 prose-h3:mb-3 prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-4 prose-a:break-all prose-a:text-gray-900 prose-a:underline! prose-a:underline-offset-4 prose-a:decoration-gray-400 prose-a:hover:decoration-gray-900 prose-strong:text-gray-900 prose-strong:font-semibold prose-code:border-gray-300 prose-code:text-rose-600 prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-pre:bg-gray-200 prose-pre:p-4 prose-pre:rounded-none prose-pre:border prose-pre:border-gray-300 prose-pre:code:text-gray-800 prose-pre:code:bg-transparent prose-pre:code:p-0 prose-pre:code:rounded-none prose-ul:my-4 prose-ul:pl-6 prose-ol:my-4 prose-ol:pl-6 prose-li:my-1 prose-li:text-gray-700 prose-blockquote:border-l-4 prose-blockquote:border-gray-300 prose-blockquote:bg-gray-50 prose-blockquote:pl-4 prose-blockquote:py-2 prose-blockquote:my-4 prose-blockquote:not-italic prose-blockquote:text-gray-600 prose-hr:border-gray-200 prose-hr:my-8 prose-table:w-full prose-table:border-collapse prose-table:my-4 prose-th:border prose-th:border-gray-200 prose-th:bg-gray-50 prose-th:p-2 prose-th:text-left prose-th:text-gray-900 prose-th:font-semibold prose-th:text-sm prose-th:font-mono prose-td:border prose-td:border-gray-200 prose-td:p-2 prose-td:text-gray-700 prose-td:text-sm">
+          <Content />
+        </article>
+      </div>
+
+      <div class="mt-8 flex items-center justify-between bg-white border border-gray-200 p-4 relative">
+        <CornerMarkers />
+        <a href="/posts" class="inline-flex items-center gap-2 px-4 py-2 min-h-[2.75rem] text-sm text-gray-500 hover:text-gray-900 transition-colors">
+          <span>←</span>
+          <span>All posts</span>
+        </a>
+        <span class="text-xs text-gray-400 font-mono">[END]</span>
+      </div>
+    </div>
+  </div>
+</LayoutPost>
