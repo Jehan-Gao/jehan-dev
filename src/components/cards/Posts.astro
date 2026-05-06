@@ -1,0 +1,80 @@
+---
+import { getCollection } from 'astro:content'
+import { formatDate } from '../../utils/date'
+import CornerMarkers from '../CornerMarkers.astro'
+import ArrowRight from '../icons/ArrowRight.astro'
+import ChevronRight from '../icons/ChevronRight.astro'
+
+interface Props {
+  limit?: number
+}
+
+const { limit = 5 } = Astro.props
+
+const posts = (
+  await getCollection('posts', ({ data }) => {
+    return import.meta.env.PROD ? data.draft !== true : true
+  })
+).sort((a, b) => (b.data.date > a.data.date ? 1 : -1))
+---
+
+<div
+  class="relative bg-white border border-gray-200 p-6 h-full flex flex-col transition-all duration-300 hover:border-gray-400"
+>
+  <CornerMarkers />
+
+  <div
+    class="mb-4 flex items-center justify-between border-b border-gray-100 pb-4"
+  >
+    <h2 class="text-lg font-semibold text-gray-900 font-mono">Posts</h2>
+    <span class="px-2 py-0.5 text-sm bg-gray-100 text-gray-600 font-mono">
+      {posts.length}
+    </span>
+  </div>
+
+  <ul class="flex-1 space-y-1">
+    {
+      posts.slice(0, limit).map(post => (
+        <li>
+          <a
+            href={`/posts/${post.id}`}
+            class="group flex items-center justify-between p-3 min-h-[3.25rem] transition-colors hover:bg-gray-50 border border-transparent hover:border-gray-200"
+          >
+            <div>
+              <h3 class="font-medium text-gray-900 group-hover:text-gray-700">
+                {post.data.title}
+                {post.data.draft && (
+                  <span class="ml-2 px-1.5 py-0.5 text-xs bg-gray-200 text-gray-600">
+                    Draft
+                  </span>
+                )}
+                {post.data.wip && (
+                  <span class="ml-2 px-1.5 py-0.5 text-xs bg-amber-100 text-amber-700">
+                    WIP
+                  </span>
+                )}
+              </h3>
+              <time
+                class="text-xs text-gray-500 font-mono"
+                datetime={post.data.date.toISOString()}
+              >
+                {formatDate(post.data.date)}
+              </time>
+            </div>
+            <ChevronRight class="h-4 w-4 text-gray-400 transition-transform group-hover:translate-x-0.5" />
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+
+  <div class="mt-auto flex justify-center pt-6 border-t border-gray-100">
+    <a
+      href="/posts"
+      class="inline-flex items-center gap-2 px-4 py-3 min-h-[2.75rem] text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900 transition-colors font-mono"
+    >
+      View more
+      <ArrowRight class="h-3 w-3" />
+    </a>
+  </div>
+</div>

@@ -1,0 +1,68 @@
+---
+import type { StoredActivitySummary } from '../../utils/strava-activities'
+import CornerMarkers from '../CornerMarkers.astro'
+import ChevronRight from '../icons/ChevronRight.astro'
+import Layout from '../layouts/Layout.astro'
+import { formatDate } from '../../utils/date'
+import { loadAllStoredActivities } from '../../utils/strava-activities'
+import {
+  formatDistanceMetersCompact,
+  formatMovingDuration,
+  formatPaceOrSpeed,
+  sportIcons,
+} from '../../utils/workout-display'
+
+const activities = loadAllStoredActivities<StoredActivitySummary>()
+
+activities.sort((a, b) => new Date(b.start_date_local).getTime() - new Date(a.start_date_local).getTime())
+
+const todayStr = formatDate(new Date())
+---
+
+<Layout title="Workouts — Jehan">
+  <div class="bg-[#f5f5f5] px-4 py-8 md:py-12 overflow-hidden">
+    <div class="mx-auto max-w-7xl h-full">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-2">
+          <h1 class="text-3xl font-bold text-gray-900 font-mono mb-6">Workouts</h1>
+          
+          {activities.length === 0 ? (
+            <div class="text-gray-500">Workouts data coming soon...</div>
+          ) : (
+            <ul class="space-y-1">
+              {activities.map((activity) => (
+                <li>
+                  <a
+                    href={`/workouts/${activity.id}`}
+                    class="group flex items-center justify-between p-3 min-h-[3.25rem] transition-colors hover:bg-gray-50 border border-transparent hover:border-gray-200"
+                  >
+                    <div class="flex items-center gap-3 min-w-0">
+                      <span class="text-lg shrink-0" title={activity.sport_type}>
+                        {sportIcons[activity.sport_type] || '💪'}
+                      </span>
+                      <div class="min-w-0">
+                        <h3 class="font-medium text-gray-900 group-hover:text-gray-700 truncate">{activity.name}</h3>
+                        <div class="flex items-center gap-2 text-xs text-gray-500 font-mono mt-0.5 min-w-0 overflow-hidden whitespace-nowrap">
+                          <time datetime={activity.start_date_local} class="shrink-0 whitespace-nowrap">
+                            {formatDate(new Date(activity.start_date_local))}
+                          </time>
+                          <span class="text-gray-300 shrink-0">|</span>
+                          <span class="shrink-0 whitespace-nowrap">{formatDistanceMetersCompact(activity.distance)}</span>
+                          <span class="text-gray-300 shrink-0">|</span>
+                          <span class="shrink-0 whitespace-nowrap">
+                            {formatMovingDuration(activity.moving_time, 'list')}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <ChevronRight class="h-4 w-4 text-gray-400 shrink-0 transition-transform group-hover:translate-x-0.5" />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>

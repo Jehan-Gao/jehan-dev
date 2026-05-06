@@ -1,0 +1,22 @@
+---
+import Footer from '../components/Footer.astro'
+
+interface Props {
+  title: string
+}
+
+const { title } = Astro.props
+---
+
+<Footer />
+<Layout title={title}>
+  <div class="bg-[#f5f5f5] px-4 py-8 md:py-12 overflow-hidden">
+    <div class="mx-auto max-w-7xl h-full">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-2">
+          <slot />
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>

@@ -1,0 +1,41 @@
+---
+interface Props {
+  thought: {
+    id: string
+    slug: string
+    data: {
+      date: Date
+      images?: { url: string, alt: string }[]
+      tags?: string[]
+    }
+    body: string
+  }
+}
+
+const { thought } = Astro.props
+---
+
+<article class="relative flex flex-col h-full">
+  <time class="mb-2 text-xs text-gray-500" datetime={thought.data.date.toISOString()}>
+    {new Date(thought.data.date).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })}
+  </time>
+  
+  <div class="prose prose-sm max-w-none text-gray-800 leading-relaxed flex-1">
+    <p>{thought.body}</p>
+  </div>
+  
+  {thought.data.tags && thought.data.tags.length > 0 && (
+    <div class="mt-3 flex flex-wrap gap-1">
+      {thought.data.tags.map(tag => (
+        <span key={tag} class="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">
+          #{tag}
+        </span>
+      ))}
+    </div>
+  )}
+</article>

@@ -1,0 +1,14 @@
+---
+import CornerMarkers from '../CornerMarkers.astro'
+
+interface Props {
+  class?: string
+}
+
+const { class: className } = Astro.props
+---
+
+<div class="relative inline-flex items-center justify-center text-xs text-gray-500">
+  <CornerMarkers class="absolute top-0 left-0 z-20" />
+  <span class="px-2 py-0.5">Edit on GitHub</span>
+</div>
