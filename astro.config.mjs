@@ -5,6 +5,7 @@ import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'astro/config'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const isDev = process.env.NODE_ENV === 'development'
 
 // https://astro.build/config
 export default defineConfig({
@@ -12,7 +13,9 @@ export default defineConfig({
 
   image: {
     service: {
-      entrypoint: 'astro/assets/services/noop',
+      entrypoint: isDev
+        ? 'astro/assets/services/noop'
+        : 'astro/assets/services/sharp',
     },
   },
 
