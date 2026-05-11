@@ -99,6 +99,16 @@ export function dailyMovingTimeHeatLevel(seconds: number): 0 | 1 | 2 | 3 {
   return 3
 }
 
+export function dailyActivityCountHeatLevel(count: number): 0 | 1 | 2 | 3 {
+  if (count <= 0)
+    return 0
+  if (count === 1)
+    return 1
+  if (count === 2)
+    return 2
+  return 3
+}
+
 export function formatDurationHeatmap(totalSeconds: number): string {
   const s = Math.max(0, Math.floor(totalSeconds))
   const h = Math.floor(s / 3600)

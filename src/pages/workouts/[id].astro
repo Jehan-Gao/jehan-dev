@@ -1,12 +1,16 @@
 ---
+import type { GetStaticPaths } from 'astro'
 import type { StoredActivity } from '../../utils/strava-activities'
 import CornerMarkers from '../../components/CornerMarkers.astro'
+import MapRoute from '../../components/MapRoute.astro'
+import ShareWorkout from '../../components/ShareWorkout.astro'
 import Layout from '../../layouts/Layout.astro'
 import { formatDate } from '../../utils/date'
+import { decodePolyline } from '../../utils/polyline'
 import { getStoredActivityIds, loadStoredActivityById } from '../../utils/strava-activities'
-import { formatDistanceMeters, formatMovingDuration, sportIcons } from '../../utils/workout-display'
+import { deviceEmoji, formatDistanceMeters, formatMaxSpeedKmh, formatMovingDuration, formatPaceOrSpeed, sportIcons } from '../../utils/workout-display'
 
-export function getStaticPaths() {
+export const getStaticPaths: GetStaticPaths = () => {
   return getStoredActivityIds()
     .map((id) => {
       const activity = loadStoredActivityById<StoredActivity>(id)
@@ -14,18 +18,35 @@ export function getStaticPaths() {
         return null
       return { params: { id: String(id) }, props: { activity } }
     })
-    .filter((x) => x !== null)
+    .filter(
+      (x): x is { params: { id: string }, props: { activity: StoredActivity } } => x !== null,
+    )
 }
 
-const { activity } = Astro.props
+const { activity } = Astro.props as { activity: StoredActivity }
+
+const polyline = activity.map?.polyline || activity.map?.summary_polyline || ''
+const hasMap = polyline.length > 0
+const points = hasMap ? decodePolyline(polyline) : []
 
 const stats = [
   { label: 'Distance', value: formatDistanceMeters(activity.distance) },
   { label: 'Moving Time', value: formatMovingDuration(activity.moving_time, 'detail') },
   { label: 'Elapsed Time', value: formatMovingDuration(activity.elapsed_time, 'detail') },
+  { label: 'Pace / Speed', value: formatPaceOrSpeed(activity.sport_type, activity.average_speed) },
+  { label: 'Max Speed', value: formatMaxSpeedKmh(activity.max_speed) },
   { label: 'Elevation Gain', value: `${activity.total_elevation_gain}m` },
+  ...(activity.has_heartrate
+    ? [
+        { label: 'Avg Heart Rate', value: `${activity.average_heartrate} bpm` },
+        { label: 'Max Heart Rate', value: `${activity.max_heartrate} bpm` },
+      ]
+    : []),
   ...(activity.calories ? [{ label: 'Calories', value: `${activity.calories} kcal` }] : []),
 ]
+
+const sportIcon = sportIcons[activity.sport_type] || '💪'
+const pageUrl = new URL(`workouts/${activity.id}`, Astro.site ?? 'https://jehan-dev.com/').href
 ---
 
 <Layout title={`${activity.name} — Workouts`}>
@@ -36,7 +57,7 @@ const stats = [
         <span class="text-gray-300">/</span>
         <a href="/workouts" class="hover:text-gray-900 transition-colors">workouts</a>
         <span class="text-gray-300">/</span>
-        <span class="text-gray-900 truncate max-w-[9.375rem] sm:max-w-[12.5rem]">{activity.name}</span>
+        <span class="text-gray-900 truncate max-w-37.5 sm:max-w-50">{activity.name}</span>
       </nav>
 
       <div class="bg-white border border-gray-200 p-4 sm:p-6 md:p-8 mb-4 relative">
@@ -57,12 +78,41 @@ const stats = [
           </time>
           <span class="text-gray-300 shrink-0">|</span>
           <span class="shrink-0 whitespace-nowrap">{activity.sport_type}</span>
+          {
+            activity.device_name && (
+              <>
+                <span class="text-gray-300 shrink-0">|</span>
+                <span class="inline-flex items-center gap-1 min-w-0 overflow-hidden text-gray-400">
+                  <span class="shrink-0">{deviceEmoji(activity.device_name)}</span>
+                  <span class="truncate">{activity.device_name}</span>
+                </span>
+              </>
+            )
+          }
         </div>
 
-        {activity.description && (
-          <p class="text-gray-600 border-l-2 border-gray-300 pl-4 mt-4">{activity.description}</p>
-        )}
+        {
+          activity.description && (
+            <p class="text-gray-600 border-l-2 border-gray-300 pl-4 mt-4">{activity.description}</p>
+          )
+        }
       </div>
+
+      {hasMap && (
+        <MapRoute points={points} duration={activity.moving_time} startTime={activity.start_date_local}>
+          <ShareWorkout
+            slot="header-actions"
+            activityId={activity.id}
+            activityName={activity.name}
+            sportType={activity.sport_type}
+            sportIcon={sportIcon}
+            date={formatDate(new Date(activity.start_date_local))}
+            stats={stats}
+            points={points}
+            pageUrl={pageUrl}
+          />
+        </MapRoute>
+      )}
 
       <div class="bg-white border border-gray-200 p-4 sm:p-6 md:p-8 mb-4 relative">
         <CornerMarkers />
@@ -70,12 +120,14 @@ const stats = [
         <h2 class="text-sm font-semibold text-gray-900 font-mono mb-4 pb-3 border-b border-gray-100">Stats</h2>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {stats.map((stat) => (
-            <div class="p-3 bg-gray-50 border border-gray-100">
-              <div class="text-xs text-gray-400 font-mono mb-1">{stat.label}</div>
-              <div class="text-lg font-semibold text-gray-900 font-mono">{stat.value}</div>
-            </div>
-          ))}
+          {
+            stats.map(stat => (
+              <div class="p-3 bg-gray-50 border border-gray-100">
+                <div class="text-xs text-gray-400 font-mono mb-1">{stat.label}</div>
+                <div class="text-lg font-semibold text-gray-900 font-mono">{stat.value}</div>
+              </div>
+            ))
+          }
         </div>
       </div>
 

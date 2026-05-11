@@ -170,6 +170,19 @@ export const LEAFLET_MAP_OPTIONS_ZOOM_ANIMATION = {
   markerZoomAnimation: true,
 } as const
 
+/**
+ * 活动路线大图：整数缩放 + 无缩放动画 + Canvas 折线 + 滚轮灵敏度，减轻滚轮时瓦片/矢量反复重绘导致的卡顿。
+ */
+export const LEAFLET_MAP_OPTIONS_ACTIVITY_ROUTE = {
+  ...LEAFLET_MAP_OPTIONS_ZOOM_ANIMATION,
+  zoomSnap: 1,
+  zoomDelta: 1,
+  preferCanvas: true,
+  fadeAnimation: false,
+  wheelPxPerZoomLevel: 260,
+  wheelDebounceTime: 72,
+} as const
+
 export function nudgeZoomOutAfterFit(map: Map, delta = 0.45): void {
   const z = map.getZoom()
   map.setZoom(Math.max(z - delta, map.getMinZoom()), { animate: false })

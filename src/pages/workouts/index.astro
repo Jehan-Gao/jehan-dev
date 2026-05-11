@@ -2,6 +2,7 @@
 import type { StoredActivitySummary } from '../../utils/strava-activities'
 import CornerMarkers from '../../components/CornerMarkers.astro'
 import ChevronRight from '../../components/icons/ChevronRight.astro'
+import WorkoutsDateRangeSelector from '../../components/WorkoutsDateRangeSelector.astro'
 import Layout from '../../layouts/Layout.astro'
 import { formatDate } from '../../utils/date'
 import { loadAllStoredActivities } from '../../utils/strava-activities'
@@ -51,6 +52,7 @@ const showEmptyRangeState = Boolean(serverFilterRange && visibleInServerRange ==
           <span class="text-gray-300">/</span>
           <span class="text-gray-900">workouts</span>
         </nav>
+        <WorkoutsDateRangeSelector initialFrom={initialFrom} initialTo={initialTo} today={todayStr} />
       </header>
 
       <div class="relative border border-gray-200 bg-white p-4 sm:p-6">
