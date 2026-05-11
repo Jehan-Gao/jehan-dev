@@ -7,20 +7,18 @@ const { class: className = '' } = Astro.props
 ---
 
 <div class={`signature-root ${className}`} data-signature-root>
-  <svg class="signature-svg" viewBox="0 0 180 50" aria-hidden="true">
-    <path
-      class="signature-dot"
-      pathLength="1"
-      d="M26 6 L26 6"
-    />
+  <svg class="signature-svg" viewBox="0 0 160 50" aria-hidden="true">
+    <circle class="signature-dot" cx="26" cy="7" r="2" pathLength="1" />
     <path
       class="signature-path"
       pathLength="1"
-      d="M26 14 L26 38 C26 42 20 44 18 40
-         M42 26 L56 26 C58 30 58 38 52 42 C46 46 42 40 42 34 L42 28
-         M68 44 L68 14 C68 10 72 10 78 10 C84 10 86 14 86 20 L86 44
-         M98 32 C98 24 108 24 112 30 C116 38 114 46 106 46 C98 46 98 38 98 32
-         M130 44 L130 22 C130 18 138 18 142 22 C146 28 146 36 146 44"
+      d="M26 14 L26 38 Q26 44 20 44
+         M42 28 Q42 22 50 22 Q58 22 58 30 Q58 38 50 38 L42 38 L42 28
+         M70 14 L70 44
+         M70 28 Q70 22 78 22 Q86 22 86 30 L86 44
+         M102 38 Q102 44 96 44 Q90 44 90 38 Q90 28 102 28 L102 38 Q102 44 108 44 Q114 44 114 38 L114 44
+         M130 22 L130 44
+         M130 28 Q130 22 138 22 Q144 22 144 30 L144 44"
     />
   </svg>
 </div>
