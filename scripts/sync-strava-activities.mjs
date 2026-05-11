@@ -79,7 +79,7 @@ async function fetchAllActivities(after = null) {
       break
     page++
   }
-  return all
+  return all.sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())
 }
 
 async function syncActivities() {
@@ -111,8 +111,9 @@ async function syncActivities() {
   const missingIds = freshIds.filter(id => !hasDetail(id))
 
   if (missingIds.length === 0) {
-    const latestTimestamp = getLatestActivityTimestamp(activities)
-    writeMeta({ ...meta, lastSync: latestTimestamp })
+    // Clear sync timestamp to force full sync
+    delete meta.lastSync
+    writeMeta(meta)
     console.log('✅ All activities up to date')
     return
   }
