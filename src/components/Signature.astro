@@ -7,15 +7,52 @@ const { class: className = '' } = Astro.props
 ---
 
 <div class={`signature-root ${className}`} data-signature-root>
-  <svg class="signature-svg" viewBox="0 0 120 50" aria-hidden="true">
+  <svg class="signature-svg" viewBox="0 0 185 65" aria-hidden="true">
+    <path
+      class="signature-dot"
+      pathLength="1"
+      d="M20 8 C21 6 23 6 23 8 C23 10 21 12 20 12 C19 12 17 10 17 8 C17 6 19 6 20 8"
+    />
     <path
       class="signature-path"
       pathLength="1"
-      d="M10 8 C12 5,14 5,14 8 C14 11,12 13,10 13
-         M10 15 C10 22,11 28,13 32 C16 38,20 38,22 34 C24 30,22 24,18 20 C14 16,12 14,15 10 C18 6,22 10,20 16
-         M20 18 C22 22,26 28,32 30 C36 31,38 28,36 24 C34 20,30 20,28 22
-         M36 18 C38 22,42 30,46 34 C48 36,50 34,48 30 C46 26,42 22,38 18 C36 14,40 12,42 16 C44 20,46 28,48 34
-         M52 16 C50 18,48 24,50 28 C52 32,56 32,58 28 C60 24,58 20,54 20 C50 20,52 26,56 28"
+      d="M18 18
+         C18 28 19 38 20 44
+         C21 50 25 52 28 48
+         C31 44 29 38 27 32
+         C26 28 30 22 40 20
+         C50 18 56 22 54 30
+         C52 36 46 40 40 38
+         C34 36 34 30 40 24
+         C44 20 48 18 52 14
+         C55 10 58 6 58 5
+         C58 8 60 12 64 16
+         C68 20 70 24 72 20
+         C74 16 76 10 76 8
+         C76 12 78 18 82 22
+         C86 26 90 26 92 22
+         C94 18 94 12 92 8
+         C90 6 90 10 92 16
+         C94 22 98 24 102 20
+         C106 16 108 10 110 14
+         C112 18 112 24 110 30
+         C108 36 106 38 108 34
+         C110 30 114 26 118 22
+         C120 20 124 16 128 20
+         C132 24 134 30 134 36
+         C134 42 130 44 126 42
+         C122 40 122 34 126 30
+         C130 26 134 24 140 22
+         C144 20 148 18 150 20
+         C152 22 150 26 148 30
+         C146 34 146 38 148 42
+         C150 44 154 44 156 40
+         C158 36 158 30 156 26
+         C154 22 154 26 156 30
+         C158 34 162 36 166 32
+         C170 28 170 22 168 20
+         C166 18 166 22 168 26
+         C170 30 174 30 176 26"
     />
   </svg>
 </div>
@@ -25,11 +62,11 @@ const { class: className = '' } = Astro.props
  const EASING = 'cubic-bezier(0.4, 0, 0.2, 1)'
 
  function setupSignature(root: Element): void {
-   const path = root.querySelector<SVGPathElement>('.signature-path')
-   if (!path) {
+   const mainPath = root.querySelector<SVGPathElement>('.signature-path')
+   const dot = root.querySelector<SVGPathElement>('.signature-dot')
+   if (!mainPath) {
      return
    }
-   const signaturePath = path
 
    let token = 0
    const cssDuration = Number.parseFloat(getComputedStyle(root).getPropertyValue('--signature-duration'))
@@ -37,33 +74,48 @@ const { class: className = '' } = Astro.props
      ? cssDuration * 1000
      : DEFAULT_DURATION_MS
 
-   async function play(from: number, to: number, duration: number): Promise<void> {
-     const animation = signaturePath.animate(
-       [{ strokeDashoffset: String(from) }, { strokeDashoffset: String(to) }],
-       {
-         duration: Math.max(1, duration),
-         easing: EASING,
-         fill: 'forwards',
-       },
-     )
-
-     try {
-       await animation.finished
-       signaturePath.style.strokeDashoffset = String(to)
-     }
-     catch {
-       // Animation was cancelled (e.g. mouseenter), ignore
+   function showDot(): void {
+     if (dot) {
+       dot.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, fill: 'forwards' })
      }
    }
 
-   function getOffset(): number {
-     const offset = Number.parseFloat(getComputedStyle(signaturePath).strokeDashoffset)
-     if (Number.isNaN(offset)) {
-       return 0
+   function hideDot(): void {
+     if (dot) {
+       dot.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 100, fill: 'forwards' })
      }
-
-     return Math.max(0, Math.min(1, offset))
    }
+
+    const path = mainPath
+
+    async function play(from: number, to: number, duration: number): Promise<void> {
+      const animation = path.animate(
+        [{ strokeDashoffset: String(from) }, { strokeDashoffset: String(to) }],
+        {
+          duration: Math.max(1, duration),
+          easing: EASING,
+          fill: 'forwards',
+        },
+      )
+
+      try {
+        await animation.finished
+        path.style.strokeDashoffset = String(to)
+        if (to === 0) showDot()
+      }
+      catch {
+        // Animation was cancelled (e.g. mouseenter), ignore
+      }
+    }
+
+    function getOffset(): number {
+      const offset = Number.parseFloat(getComputedStyle(path).strokeDashoffset)
+      if (Number.isNaN(offset)) {
+        return 0
+      }
+
+      return Math.max(0, Math.min(1, offset))
+    }
 
    void play(1, 0, durationMs)
 
@@ -71,7 +123,8 @@ const { class: className = '' } = Astro.props
      token += 1
      const run = token
      const offset = getOffset()
-     signaturePath.getAnimations().forEach(animation => animation.cancel())
+      path.getAnimations().forEach(animation => animation.cancel())
+     hideDot()
 
      const reverseDuration = Math.round(durationMs * (1 - offset))
 
@@ -103,10 +156,15 @@ const { class: className = '' } = Astro.props
     overflow: visible;
   }
 
+  .signature-dot {
+    fill: var(--signature-stroke);
+    opacity: 0;
+  }
+
   .signature-path {
     fill: none;
     stroke: var(--signature-stroke);
-    stroke-width: 1.5;
+    stroke-width: 2.5;
     stroke-linecap: round;
     stroke-linejoin: round;
     stroke-dasharray: 1;
