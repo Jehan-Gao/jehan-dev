@@ -1,0 +1,115 @@
+---
+interface Props {
+  class?: string
+}
+
+const { class: className = '' } = Astro.props
+---
+
+<div class={`signature-root ${className}`} data-signature-root>
+  <svg class="signature-svg" viewBox="0 0 120 50" aria-hidden="true">
+    <path
+      class="signature-path"
+      pathLength="1"
+      d="M10 8 C12 5,14 5,14 8 C14 11,12 13,10 13
+         M10 15 C10 22,11 28,13 32 C16 38,20 38,22 34 C24 30,22 24,18 20 C14 16,12 14,15 10 C18 6,22 10,20 16
+         M20 18 C22 22,26 28,32 30 C36 31,38 28,36 24 C34 20,30 20,28 22
+         M36 18 C38 22,42 30,46 34 C48 36,50 34,48 30 C46 26,42 22,38 18 C36 14,40 12,42 16 C44 20,46 28,48 34
+         M52 16 C50 18,48 24,50 28 C52 32,56 32,58 28 C60 24,58 20,54 20 C50 20,52 26,56 28"
+    />
+  </svg>
+</div>
+
+<script>
+ const DEFAULT_DURATION_MS = 2400
+ const EASING = 'cubic-bezier(0.4, 0, 0.2, 1)'
+
+ function setupSignature(root: Element): void {
+   const path = root.querySelector<SVGPathElement>('.signature-path')
+   if (!path) {
+     return
+   }
+   const signaturePath = path
+
+   let token = 0
+   const cssDuration = Number.parseFloat(getComputedStyle(root).getPropertyValue('--signature-duration'))
+   const durationMs = Number.isFinite(cssDuration) && cssDuration > 0
+     ? cssDuration * 1000
+     : DEFAULT_DURATION_MS
+
+   async function play(from: number, to: number, duration: number): Promise<void> {
+     const animation = signaturePath.animate(
+       [{ strokeDashoffset: String(from) }, { strokeDashoffset: String(to) }],
+       {
+         duration: Math.max(1, duration),
+         easing: EASING,
+         fill: 'forwards',
+       },
+     )
+
+     try {
+       await animation.finished
+       signaturePath.style.strokeDashoffset = String(to)
+     }
+     catch {
+       // Animation was cancelled (e.g. mouseenter), ignore
+     }
+   }
+
+   function getOffset(): number {
+     const offset = Number.parseFloat(getComputedStyle(signaturePath).strokeDashoffset)
+     if (Number.isNaN(offset)) {
+       return 0
+     }
+
+     return Math.max(0, Math.min(1, offset))
+   }
+
+   void play(1, 0, durationMs)
+
+   root.addEventListener('mouseenter', () => {
+     token += 1
+     const run = token
+     const offset = getOffset()
+     signaturePath.getAnimations().forEach(animation => animation.cancel())
+
+     const reverseDuration = Math.round(durationMs * (1 - offset))
+
+     void play(offset, 1, reverseDuration).then(() => {
+       if (run !== token) {
+         return
+       }
+
+       void play(1, 0, durationMs)
+     })
+   })
+ }
+
+ document.querySelectorAll('[data-signature-root]').forEach((root) => {
+   setupSignature(root)
+ })
+</script>
+
+<style>
+  .signature-root {
+    --signature-stroke: #0f172a;
+    --signature-duration: 2.4s;
+    display: inline-block;
+  }
+
+  .signature-svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .signature-path {
+    fill: none;
+    stroke: var(--signature-stroke);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+  }
+</style>

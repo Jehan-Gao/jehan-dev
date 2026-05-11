@@ -1,6 +1,7 @@
 ---
 import Avatar from '../Avatar.astro'
 import CornerMarkers from '../CornerMarkers.astro'
+import Signature from '../Signature.astro'
 
 interface Props {
   class?: string
@@ -20,4 +21,6 @@ const { class: className } = Astro.props
       <div class="mt-1 text-sm font-medium text-gray-500">A programmer & father of one</div>
     </div>
   </div>
+
+  <Signature class="absolute bottom-4 right-4 h-20 w-20 z-10! transition-transform duration-300" />
 </div>
